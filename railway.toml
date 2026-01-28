@@ -1,0 +1,8 @@
+# https://docs.railway.app/reference/config-as-code
+# Root Directory du service Railway doit être "backend".
+
+[deploy]
+healthcheckPath = "/api/health"
+healthcheckTimeout = 30
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3
