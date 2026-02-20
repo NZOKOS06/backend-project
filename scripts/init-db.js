@@ -26,6 +26,7 @@ async function initDatabase() {
         name VARCHAR(255) NOT NULL,
         address TEXT NOT NULL,
         phone VARCHAR(50),
+        is_open BOOLEAN DEFAULT true,
         pharmacist_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
@@ -44,6 +45,7 @@ async function initDatabase() {
         product_id INTEGER REFERENCES products(id) ON DELETE CASCADE,
         quantity INTEGER NOT NULL DEFAULT 0 CHECK (quantity >= 0),
         price DECIMAL(10,2),
+        is_available BOOLEAN DEFAULT true,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         UNIQUE(pharmacy_id, product_id)
       );
