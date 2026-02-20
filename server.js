@@ -11,6 +11,9 @@ dotenv.config({ path: path.join(__dirname, '.env') });
 // Cloud Database URL (Render PostgreSQL)
 const CLOUD_DATABASE_URL = 'postgresql://ma_base_production_user:fiVg1IQPYuiJXsFuetUrjz8yrTdsBbWc@dpg-d6ca8pjh46gs738apekg-a.frankfurt-postgres.render.com/ma_base_production';
 
+// Default JWT Secret for production (should be overridden in environment variables)
+const DEFAULT_JWT_SECRET = 'pharmastock-production-secret-key-2024-secure';
+
 function validateEnv() {
   const hasDbUrl = !!process.env.DATABASE_URL;
   const hasCloudDbUrl = !!CLOUD_DATABASE_URL;
@@ -27,11 +30,11 @@ function validateEnv() {
     });
     process.exit(1);
   }
+  
+  // Use JWT_SECRET from environment or fallback to default
   if (!process.env.JWT_SECRET) {
-    logger.error('JWT_SECRET requis', {
-      hasJwtSecret: !!process.env.JWT_SECRET
-    });
-    process.exit(1);
+    logger.warn('JWT_SECRET non défini, utilisation de la valeur par défaut (à changer en production)');
+    process.env.JWT_SECRET = DEFAULT_JWT_SECRET;
   }
   if (process.env.NODE_ENV === 'production' && !process.env.CORS_ORIGIN && !process.env.FRONTEND_URL) {
     logger.warn('CORS_ORIGIN ou FRONTEND_URL non défini en production - utilisation des origines par défaut');
