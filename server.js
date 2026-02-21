@@ -15,7 +15,7 @@ const CLOUD_DATABASE_URL = 'postgresql://ma_base_production_user:fiVg1IQPYuiJXsF
 const DEFAULT_JWT_SECRET = 'pharmastock-production-secret-key-2024-secure';
 
 // Default production origins
-const DEFAULT_PRODUCTION_ORIGINS = 'https://pharmastock.vercel.app,https://pharmastock-mobile.vercel.app';
+const DEFAULT_PRODUCTION_ORIGINS = 'https://https://frontend-project-lkbd.vercel.app,https://pharmastock-mobile.vercel.app';
 
 function validateEnv() {
   const hasDbUrl = !!process.env.DATABASE_URL;
