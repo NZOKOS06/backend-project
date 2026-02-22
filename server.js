@@ -63,32 +63,31 @@ const limiter = rateLimit({
   legacyHeaders: false,
 });
 
-app.use(cors({
-  origin: "*"
-}));
-
 app.use(limiter);
 
-// CORS configuration
-const corsOrigin = process.env.CORS_ORIGIN || process.env.FRONTEND_URL;
-const allowedOrigins = corsOrigin
-  ? corsOrigin.split(',').map((o) => o.trim())
-  : (process.env.NODE_ENV === 'production'
-      ? [] // En production, aucune origine par défaut
-      : ['http://localhost:3000', 'http://localhost:5173', 'http://192.168.1.126:8081']
-    );
-
+// CORS configuration - Allow all origins in production for Vercel
 const corsOptions = {
   origin: function (origin, callback) {
     // Autoriser les requêtes sans origine (comme les apps mobiles ou Postman)
     if (!origin) return callback(null, true);
 
-    if (allowedOrigins.includes(origin) || allowedOrigins.length === 0) {
-      callback(null, true);
-    } else {
-      logger.warn('Origine CORS rejetée', { origin });
-      callback(new Error('Not allowed by CORS'));
+    // Accepter toutes les origines Vercel (elles changent à chaque déploiement)
+    if (origin.endsWith('.vercel.app') || origin.endsWith('.vercel.com')) {
+      return callback(null, true);
     }
+
+    // Accepter toutes les origines en production (simplifie le déploiement)
+    if (process.env.NODE_ENV === 'production') {
+      return callback(null, true);
+    }
+
+    // En développement, autoriser localhost
+    if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
+      return callback(null, true);
+    }
+
+    logger.warn('Origine CORS rejetée', { origin });
+    callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
   optionsSuccessStatus: 200,
