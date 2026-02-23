@@ -426,25 +426,14 @@ router.post('/', authenticateToken, requireRole('pharmacist'), createProductVali
   }
 });
 
-// Get all brands - modified to handle missing brand column
+// Get all brands
 router.get('/brands', async (req, res) => {
   try {
-    // Check if brand column exists
-    const columnCheck = await pool.query(`
-      SELECT column_name 
-      FROM information_schema.columns 
-      WHERE table_name = 'products' AND column_name = 'brand'
-    `);
-    
-    if (columnCheck.rows.length === 0) {
-      return res.json([]);
-    }
-    
     const result = await pool.query('SELECT DISTINCT brand FROM products WHERE brand IS NOT NULL AND brand != \'\' ORDER BY brand');
     res.json(result.rows.map(row => row.brand));
   } catch (error) {
     console.error('Get brands error:', error);
-    res.json([]);
+    res.status(500).json({ error: 'Server error' });
   }
 });
 
