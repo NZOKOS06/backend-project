@@ -292,17 +292,24 @@ router.put('/inventory/:id', authenticateToken, requireRole('pharmacist'), updat
 
     const pharmacyId = pharmacyResult.rows[0].id;
 
-    const setClauses = ['quantity = $1', 'price = $2', 'updated_at = CURRENT_TIMESTAMP'];
-    const setValues = [quantity, price || null];
+    // Build dynamic update query
+    let setClauses = ['quantity = $1', 'price = $2', 'updated_at = CURRENT_TIMESTAMP'];
+    let setValues = [quantity, price || null];
+    
     if (is_available !== undefined) {
+      // Explicitly convert to boolean to ensure correct type for PostgreSQL
+      const isAvailableBool = is_available === true || is_available === 'true' || is_available === 1 || is_available === '1';
       setClauses.push('is_available = $3');
-      setValues.push(!!is_available);
+      setValues.push(isAvailableBool);
     }
-    const whereId = setValues.length - 1;
-    const wherePharmacy = setValues.length;
+    
+    // Add WHERE clause parameters
     setValues.push(id, pharmacyId);
+    
+    const whereClause = `WHERE id = $${setValues.length - 1} AND pharmacy_id = $${setValues.length}`;
+    
     const result = await pool.query(
-      `UPDATE inventory SET ${setClauses.join(', ')} WHERE id = $${whereId} AND pharmacy_id = $${wherePharmacy} RETURNING *`,
+      `UPDATE inventory SET ${setClauses.join(', ')} ${whereClause} RETURNING *`,
       setValues
     );
 
