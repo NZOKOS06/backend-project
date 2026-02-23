@@ -377,6 +377,78 @@ router.post('/pharmacies', async (req, res) => {
   }
 });
 
+// CREATE PHARMACY WITH A NEW PHARMACIST USER
+router.post('/create-pharmacy-with-user', async (req, res) => {
+  const {
+    pharmacyName,
+    pharmacyAddress,
+    pharmacyPhone,
+    pharmacistName,
+    pharmacistEmail,
+    pharmacistPassword
+  } = req.body;
+
+  if (!pharmacyName || !pharmacyAddress || !pharmacistName || !pharmacistEmail || !pharmacistPassword) {
+    return res.status(400).json({
+      error: 'Missing required fields for pharmacy or pharmacist.'
+    });
+  }
+
+  const client = await pool.connect();
+
+  try {
+    await client.query('BEGIN');
+
+    // 1. Check if user email already exists
+    const existingUser = await client.query('SELECT id FROM users WHERE email = $1', [pharmacistEmail]);
+    if (existingUser.rows.length > 0) {
+      throw new Error('An account with this email already exists.');
+    }
+
+    // 2. Create the new pharmacist user
+    const hashedPassword = await bcrypt.hash(pharmacistPassword, 12);
+    const userResult = await client.query(
+      'INSERT INTO users (email, password, name, role) VALUES ($1, $2, $3, $4) RETURNING id',
+      [pharmacistEmail, hashedPassword, pharmacistName, 'pharmacist']
+    );
+    const newUserId = userResult.rows[0].id;
+
+    // 3. Create the new pharmacy and assign the new user to it
+    const pharmacyResult = await client.query(
+      'INSERT INTO pharmacies (name, address, phone, pharmacist_id, is_open) VALUES ($1, $2, $3, $4, true) RETURNING *',
+      [pharmacyName, pharmacyAddress, pharmacyPhone, newUserId]
+    );
+
+    await client.query('COMMIT');
+
+    logger.info('Pharmacy with new user created by admin', {
+      pharmacyId: pharmacyResult.rows[0].id,
+      userId: newUserId,
+      adminId: req.user.id,
+      ip: req.ip
+    });
+
+    res.status(201).json({
+      message: 'Pharmacy and pharmacist account created successfully.',
+      pharmacy: pharmacyResult.rows[0],
+    });
+
+  } catch (error) {
+    await client.query('ROLLBACK');
+    logger.error('Admin create pharmacy with user error', {
+      error: error.message,
+      adminId: req.user?.id,
+      ip: req.ip
+    });
+    res.status(500).json({
+      error: error.message || 'Server error during the creation process.'
+    });
+  } finally {
+    client.release();
+  }
+});
+
+
 // Update pharmacy
 router.put('/pharmacies/:id', async (req, res) => {
   try {
