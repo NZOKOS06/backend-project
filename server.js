@@ -110,6 +110,9 @@ app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/pharmacies', pharmacyRoutes);
 
+const adminRoutes = require('./routes/admin');
+app.use('/api/admin', adminRoutes);
+
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'PharmaStock API is running' });
 });
